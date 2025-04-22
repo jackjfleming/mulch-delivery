@@ -79,24 +79,14 @@ export default function StopDetails({ stop: initialStop, onBack }) {
 
         // Get the scout objects from the result
         if (result.assignedScouts && result.assignedScouts.length > 0) {
-          // Create a temporary array to track which scouts we've already processed
-          const processedScoutIds = new Set()
-
           // For each assigned scout
-          result.assignedScouts.forEach((scoutData) => {
-            // Find the full scout object
-            const scout = scouts.find((s) => s.id === scoutData.scout_id)
-
-            if (scout && !processedScoutIds.has(scout.id)) {
-              processedScoutIds.add(scout.id)
-
-              // Add the scout with appropriate roles to local state
-              if (truckScoutRoles.drop) {
-                addLocalScout(scout.id, "drop")
-              }
-              if (truckScoutRoles.spread) {
-                addLocalScout(scout.id, "spread")
-              }
+          result.assignedScouts.forEach((scout) => {
+            // Add the scout with appropriate roles to local state
+            if (truckScoutRoles.drop) {
+              addLocalScout(scout.id, "drop")
+            }
+            if (truckScoutRoles.spread) {
+              addLocalScout(scout.id, "spread")
             }
           })
         }
@@ -235,6 +225,9 @@ export default function StopDetails({ stop: initialStop, onBack }) {
       } else if (!scoutRoles[scout.name].includes(role)) {
         scoutRoles[scout.name] = [...scoutRoles[scout.name], role]
       }
+
+      console.log("Updated scout roles:", scoutRoles)
+      console.log("Updated assigned scouts:", assignedScouts)
 
       return {
         ...prevStop,

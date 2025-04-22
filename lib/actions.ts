@@ -749,19 +749,27 @@ export async function createRoute(name: string) {
   try {
     const supabase = createServerClient()
 
-    console.log("Creating route...")
-    const { error } = await supabase.from("routes").insert([{ name }])
+    console.log("Creating route with name:", name)
+    console.log("Using Supabase client:", supabase ? "Valid client" : "Invalid client")
+
+    // Check if we're using the service role
+    const { data: authData, error: authError } = await supabase.auth.getSession()
+    console.log("Auth session check:", authError ? "Error" : "Success", "Role:", authData?.session?.role || "No role")
+
+    const { data, error } = await supabase.from("routes").insert([{ name }]).select()
 
     if (error) {
       console.error("Error creating route:", error)
+      console.error("Error details:", JSON.stringify(error))
       throw new Error(`Failed to create route: ${error.message}`)
     }
 
+    console.log("Route created successfully:", data)
     revalidatePath("/routes")
-    return { success: true }
+    return { success: true, route: data?.[0] }
   } catch (error) {
     console.error("Error in createRoute:", error)
-    return { success: false }
+    return { success: false, error: error.message }
   }
 }
 
@@ -1352,6 +1360,7 @@ export async function assignTruckScoutsToStop(
 
     if (scoutsError) {
       console.error("Error fetching scout details:", scoutsError)
+      throw new Error(`Failed to fetch scout details: ${scoutsError.message}`)
     }
 
     // Prepare assignments
@@ -1389,12 +1398,10 @@ export async function assignTruckScoutsToStop(
       throw new Error(`Failed to assign truck scouts to stop: ${error.message}`)
     }
 
-    // Don't revalidate the path since we're updating the UI directly
-    // revalidatePath(`/routes/${stop_id}`)
-
+    // Return the full scout objects
     return {
       success: true,
-      assignedScouts: scoutObjects || truckScouts,
+      assignedScouts: scoutObjects || [],
     }
   } catch (error) {
     console.error("Error in assignTruckScoutsToStop:", error)
